@@ -2,6 +2,8 @@
 import { DataSource } from 'typeorm';
 import { Tenant } from '../entity/tenant.entity'; // Adjust the import path as necessary
 import { User } from '../entity/user.entity'; // Adjust the import path as necessary
+import 'dotenv/config'; 
+
 
 export const CentralDataSource = new DataSource({
   type: 'mariadb',

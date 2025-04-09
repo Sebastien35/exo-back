@@ -4,6 +4,7 @@ import { DatabaseModule } from '../database/database.module';
 import { TenantService } from './services/tenant.service';
 import { EncryptionModule } from './modules/encryption.module';
 import { EncryptionController } from './controllers/encryption.controller';
+import { TenantController } from './controllers/tenant.controller';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { EncryptionController } from './controllers/encryption.controller';
     DatabaseModule,
     EncryptionModule,
   ],
-  controllers: [EncryptionController],
+  controllers: [EncryptionController, TenantController ],
   providers: [TenantService],
 })
 export class AppModule {
