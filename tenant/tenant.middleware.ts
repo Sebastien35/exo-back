@@ -8,7 +8,7 @@ export class TenantMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     const tenantId = req.headers['x-tenant-id'] as string;
-    
+
     if (!tenantId) {
       throw new Error('Tenant ID is required');
     }
@@ -19,6 +19,7 @@ export class TenantMiddleware implements NestMiddleware {
     }
 
     req['tenant'] = tenant;
+    req['tenantId'] = tenantId; // ← ajoute cette ligne
     next();
   }
 }
