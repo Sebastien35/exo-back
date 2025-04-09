@@ -1,7 +1,7 @@
 // src/entities/User.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
-@Entity('users')
+@Entity('customers')
 export class Customer {
   @PrimaryGeneratedColumn('uuid')
   id: string;

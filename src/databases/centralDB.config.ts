@@ -10,7 +10,7 @@ export const CentralDataSource = new DataSource({
   host: process.env.CENTRAL_DB_HOST || 'localhost',
   port: parseInt(process.env.CENTRAL_DB_PORT || '3306'),
   username: process.env.CENTRAL_DB_USER || 'root',
-  password: process.env.CENTRAL_DB_PASSWORD || '',
+  password: process.env.CENTRAL_DB_PASSWORD || 'password',
   database: process.env.CENTRAL_DB_NAME || 'central_db',
   entities: [Tenant, User],
   synchronize: process.env.NODE_ENV !== 'production',
