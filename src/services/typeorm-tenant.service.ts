@@ -3,7 +3,7 @@ import { Injectable, Scope, Inject } from '@nestjs/common';
 import { DataSource, ObjectLiteral } from 'typeorm';
 import { Request } from 'express';
 import { REQUEST } from '@nestjs/core';
-import { User } from '../entities/user.entity';
+import { User } from '../entity/user.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class TypeOrmTenantService {
