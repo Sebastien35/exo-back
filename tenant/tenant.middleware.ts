@@ -19,7 +19,7 @@ export class TenantMiddleware implements NestMiddleware {
     }
 
     req['tenant'] = tenant;
-    req['tenantId'] = tenantId; // ← ajoute cette ligne
+    req['tenantId'] = tenantId;
     next();
   }
 }

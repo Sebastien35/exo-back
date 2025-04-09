@@ -6,7 +6,6 @@ export class TenantService {
   private tenants: Map<string, Tenant> = new Map();
 
   constructor() {
-    // Initialize with some sample tenants
     this.tenants.set('tenant1', {
       id: 'tenant1',
       name: 'Tenant 1',
