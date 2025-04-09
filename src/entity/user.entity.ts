@@ -14,7 +14,25 @@ export class User {
   passwordHash: string;
 
   @Column()
+  name: string;
+
+  @Column()
+  lastname: string;
+
+  @Column()
+  rib: string;
+
+  @Column()
   tenantId: string;
+
+  @Column()
+  numero_ss: string;
+
+  @Column()
+  phone: string;
+
+  @Column()
+  address: string;
 
   @ManyToOne(() => Tenant, tenant => tenant.users)
   @JoinColumn({ name: 'tenantId' })
