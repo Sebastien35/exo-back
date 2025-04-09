@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11.3
+    container_name: saas-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: strongpassword
+      MARIADB_DATABASE: template_db # Optional initial db
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: strongpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - saas-network
+  phpmyadmin_mariadb:
+    image: phpmyadmin/phpmyadmin
+    container_name: saas-phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: admin
+      PMA_PASSWORD: strongpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - saas-network
+    restart: always
+
+volumes:
+  mariadb_data:
+
+networks:
+  saas-network:
+    driver: bridge
