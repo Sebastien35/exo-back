@@ -1,9 +1,11 @@
 // src/entities/User.ts
+
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Tenant } from './tenant.entity'; // Adjust the import path as necessary
 
 @Entity('users')
 export class User {
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -14,25 +16,7 @@ export class User {
   passwordHash: string;
 
   @Column()
-  name: string;
-
-  @Column()
-  lastname: string;
-
-  @Column()
-  rib: string;
-
-  @Column()
   tenantId: string;
-
-  @Column()
-  numero_ss: string;
-
-  @Column()
-  phone: string;
-
-  @Column()
-  address: string;
 
   @ManyToOne(() => Tenant, tenant => tenant.users)
   @JoinColumn({ name: 'tenantId' })

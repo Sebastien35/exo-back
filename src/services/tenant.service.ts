@@ -23,9 +23,24 @@ export class TenantService {
     const queryRunner = CentralDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
+  
     try {
-      // Create tenant
+      // Step 1: Create the database for the tenant
+      const tenantDbName = createTenantDto.dbName || `tenant_${createTenantDto.name.toLowerCase().replace(/\s+/g, '_')}`;
+      
+      // Check if the database already exists (optional but recommended)
+      const dbCheckQuery = `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${tenantDbName}'`;
+      const existingDb = await queryRunner.manager.query(dbCheckQuery);
+  
+      if (existingDb.length === 0) {
+        // Create the database if it doesn't exist
+        await queryRunner.manager.query(`CREATE DATABASE ${tenantDbName}`);
+        console.log(`Database ${tenantDbName} created successfully.`);
+      } else {
+        console.log(`Database ${tenantDbName} already exists.`);
+      }
+  
+      // Step 2: Create tenant record with the new database information
       const tenant = this.tenantRepository.create({
         name: createTenantDto.name,
         description: createTenantDto.description,
@@ -33,24 +48,24 @@ export class TenantService {
         dbPort: createTenantDto.dbPort,
         dbUsername: createTenantDto.dbUsername,
         dbPassword: createTenantDto.dbPassword,
-        dbName: createTenantDto.dbName || `tenant_${createTenantDto.name.toLowerCase().replace(/\s+/g, '_')}`,
+        dbName: tenantDbName,
       });
-
+  
       await queryRunner.manager.save(tenant);
-
-      // Create admin user
+  
+      // Step 3: Create admin user for the tenant
       const adminUser = this.userRepository.create({
         email: createTenantDto.adminEmail,
-        passwordHash: await this.hashPassword(createTenantDto.adminPassword),   
+        passwordHash: await this.hashPassword(createTenantDto.adminPassword),
         tenantId: tenant.id,
         role: 'admin',
       });
-
+  
       await queryRunner.manager.save(adminUser);
-
+  
       // Commit transaction
       await queryRunner.commitTransaction();
-
+  
       return { tenant, adminUser };
     } catch (error) {
       // Rollback on error
