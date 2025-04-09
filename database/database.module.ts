@@ -19,7 +19,7 @@ import { ConfigService } from '@nestjs/config';
           password: configService.get('DB_PASSWORD'),
           database: tenant.database,
           entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-          synchronize: true, // Set to false in production
+          synchronize: true,
         };
       },
       // Removed 'scope' as it is not a valid property for TypeOrmModuleAsyncOptions
