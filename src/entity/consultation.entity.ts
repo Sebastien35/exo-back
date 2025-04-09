@@ -2,7 +2,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('requests')
-export class User {
+export class Consultation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

@@ -6,7 +6,6 @@ services:
     container_name: saas-mariadb
     environment:
       MARIADB_ROOT_PASSWORD: strongpassword
-      MARIADB_DATABASE: template_db # Optional initial db
       MARIADB_USER: admin
       MARIADB_PASSWORD: strongpassword
     ports:
@@ -21,13 +20,13 @@ services:
     image: phpmyadmin/phpmyadmin
     container_name: saas-phpmyadmin
     environment:
-      PMA_HOST: mariadb
-      PMA_USER: admin
+      PMA_HOST: mariadb  # Connect phpMyAdmin to the 'mariadb' service by its service name
+      PMA_USER: root
       PMA_PASSWORD: strongpassword
     ports:
       - "8080:80"
     depends_on:
-      - mariadb
+      - mariadb  # Ensure that phpMyAdmin waits for mariadb to be ready
     networks:
       - saas-network
     restart: always
