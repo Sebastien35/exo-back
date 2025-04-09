@@ -1,10 +1,10 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../database/database.module';
-import { TenantMiddleware } from '../tenant/tenant.middleware';
 import { TenantService } from './services/tenant.service';
 import { EncryptionModule } from './modules/encryption.module';
 import { EncryptionController } from './controllers/encryption.controller';
+import { TenantController } from './controllers/tenant.controller';
 
 @Module({
   imports: [
@@ -12,7 +12,7 @@ import { EncryptionController } from './controllers/encryption.controller';
     DatabaseModule,
     EncryptionModule,
   ],
-  controllers: [EncryptionController],
+  controllers: [EncryptionController, TenantController ],
   providers: [TenantService],
 })
 export class AppModule {
