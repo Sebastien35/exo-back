@@ -1,8 +1,8 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './database/database.module';
-import { TenantMiddleware } from './tenant/tenant.middleware';
-import { TenantService } from './tenant/tenant.service';
+import { DatabaseModule } from '../database/database.module';
+import { TenantMiddleware } from '../tenant/tenant.middleware';
+import { TenantService } from '../tenant/tenant.service';
 
 @Module({
   imports: [
