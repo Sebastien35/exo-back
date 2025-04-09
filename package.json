@@ -32,6 +32,7 @@
     "class-validator": "^0.14.1",
     "config": "^3.3.12",
     "mysql": "^2.18.1",
+    "mysql2": "^3.14.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.2",
