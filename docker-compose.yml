@@ -13,9 +13,10 @@ services:
       - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./init:/docker-entrypoint-initdb.d
+      - ./init:/docker-entrypoint-initdb.d  # Ensure this path mounts the init folder with the init.sql
     networks:
       - saas-network
+
   phpmyadmin_mariadb:
     image: phpmyadmin/phpmyadmin
     container_name: saas-phpmyadmin
