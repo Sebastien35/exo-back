@@ -74,6 +74,7 @@ def create_customer():
     try:
         print("Sending data to NestJS API: ", data)  # Log data being sent
         response = requests.post(f"{API_URL}/customers", json=data, headers=headers)
+        print(response.json())  # Log the response for debugging
         if not response.ok:
             flash(response.json().get("message", "Failed to create customer"))
         else:
@@ -133,6 +134,64 @@ def customer_consultations(customer_id):
         consultations=consultations,
         customer_id=customer_id
     )
+
+
+@app.route("/customers/login", methods=["GET", "POST"])
+def customer_login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        tenant_id = request.form.get("tenant")
+
+        # Authenticate user (check email, password, and tenant)
+        # Example of authentication, you need to implement the actual logic
+        user = authenticate_customer(email, password, tenant_id)
+        if user:
+            session["user"] = user
+            session["tenant_id"] = tenant_id
+            return redirect(url_for("dashboard"))
+        else:
+            flash("Invalid email or password")
+            return redirect(url_for("customer_login"))
+
+    # On GET request, render the login page with the list of tenants
+    tenants = get_all_tenants()  # Fetch tenants from DB
+    return render_template("customer_login.html", tenants=tenants)
+
+
+def get_all_tenants():
+    # This function fetches all tenants from an external API
+    try:
+        # Sending GET request to fetch tenant data
+        response = requests.get(f"{API_URL}/tenants")
+        if response.ok:
+            print(response.json())
+            return response.json()  # Return the data as JSON
+        else:
+            print(response.json())
+            return []
+    except requests.RequestException as e:
+        print(f"Error fetching tenants: {e}")
+        return []
+
+
+def authenticate_customer(email, password, tenant_id):
+    try:
+        payload = {"email": email, "password": password, "tenantId": tenant_id}
+
+        response = requests.post(f"{API_URL}/customers/login", json=payload)
+
+        if response.status_code == 200:
+            data = response.json()
+            print("Login successful:", data)
+            return data  # This will contain the token and message
+        else:
+            print("Login failed:", response.status_code, response.text)
+            return None
+
+    except requests.RequestException as e:
+        print("Error during authentication:", e)
+        return None
 
 
 if __name__ == "__main__":

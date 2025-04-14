@@ -1,14 +1,21 @@
 import { Module } from '@nestjs/common';
-import { CustomerController } from '../controllers/customer.controller'; // adjust path as needed
-import { CustomerService } from '../services/customer.service'; // adjust path as needed
+import { CustomerController } from '../controllers/customer.controller';
+import { CustomerService } from '../services/customer.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Customer } from '../entity/customer.entity'; // adjust path as needed
-import { EncryptionService } from '../services/encryption.service'; // adjust path as needed
+import { Customer } from '../entity/customer.entity';
+import { EncryptionService } from '../services/encryption.service';
+import { AuthModule } from './auth.module'; // Only import the module, not services
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Customer])], // inject the Customer entity
+  imports: [
+    TypeOrmModule.forFeature([Customer]), // For TypeORM repository
+    AuthModule, // Import the entire AuthModule
+  ],
   controllers: [CustomerController],
-  providers: [CustomerService, EncryptionService], // inject the EncryptionService if needed
-  exports: [CustomerService], // in case other modules need it
+  providers: [
+    CustomerService,
+    EncryptionService,
+  ],
+  exports: [CustomerService],
 })
 export class CustomerModule {}
