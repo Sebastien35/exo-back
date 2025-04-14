@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0e7ff, #f3e8ff);
+    }
+  
+    .container {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+  
+    h1 {
+      text-align: center;
+      color: #1e293b;
+    }
+  
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+  
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      color: #111827;
+    }
+  
+    th {
+      background-color: rgba(243, 244, 246, 0.8);
+      font-weight: 600;
+    }
+  
+    tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+  
+    a.button-link {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 10px 16px;
+      background-color: #2563eb;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.2s ease;
+    }
+  
+    a.button-link:hover {
+      background-color: #1e40af;
+    }
+  </style>
+  
+<div class="container mt-8">
+  <h1 class="text-2xl font-bold mb-4">Consultations du client {{ customer_id }}</h1>
+
+  {% if consultations %}
+  <table class="table-auto w-full bg-white shadow-md rounded">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="px-4 py-2">Date</th>
+        <th class="px-4 py-2">Montant (€)</th>
+        <th class="px-4 py-2">Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for consultation in consultations %}
+      <tr class="border-b">
+        <td class="px-4 py-2">{{ consultation.consultationDate }}</td>
+        <td class="px-4 py-2">{{ consultation.montant }}</td>
+        <td class="px-4 py-2">{{ consultation.type }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Aucune consultation trouvée pour ce client.</p>
+  {% endif %}
+
+  <a href="{{ url_for('customers') }}" class="button-link">← Retour aux clients</a>
+
+</div>
+{% endblock %}
