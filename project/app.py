@@ -90,6 +90,26 @@ def create_customer():
     return redirect(url_for("customers"))
 
 
+@app.route("/customers/<string:customer_id>/delete", methods=["POST"])
+def delete_customer(customer_id):
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    headers = {"Authorization": f'Bearer {session["token"]}'}
+    try:
+        response = requests.delete(
+            f"{API_URL}/customers/{customer_id}", headers=headers
+        )
+        if response.ok:
+            flash("Customer deleted successfully!")
+        else:
+            flash("Failed to delete customer")
+    except requests.RequestException:
+        flash("Failed to connect to the server")
+
+    return redirect(url_for("customers"))
+
+
 @app.route("/logout")
 def logout():
     session.clear()
