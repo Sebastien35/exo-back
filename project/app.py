@@ -17,7 +17,7 @@ def index():
     response = requests.get(f"{API_URL}/tenants", headers=headers)
     tenants = response.json() if response.ok else []
 
-    return render_template("index.html", tenants=tenants)
+    return render_template("login.html", tenants=tenants)
 
 
 @app.route("/login", methods=["GET", "POST"])

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tenant Management{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* You can also include your custom styles here */
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans text-gray-900">
+    <header>
+        <!-- Add any navigation bar or header content here if necessary -->
+        <nav class="bg-blue-600 p-4">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <a href="/" class="text-white text-2xl">Tenant Management</a>
+                <ul class="flex space-x-4">
+                    <li><a href="/" class="text-white hover:text-blue-200">Home</a></li>
+                    <li><a href="/login" class="text-white hover:text-blue-200">Login</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        <!-- Content from other templates will be injected here -->
+        {% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-8">
+        <p>&copy; 2025 Tenant Management. All rights reserved.</p>
+    </footer>
+</body>
+
+</html>
