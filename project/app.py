@@ -9,15 +9,7 @@ API_URL = "http://localhost:3000"
 
 @app.route("/")
 def index():
-    if "token" not in session:
-        return redirect(url_for("login"))
-
-    # Fetch tenants from the API
-    headers = {"Authorization": f'Bearer {session["token"]}'}
-    response = requests.get(f"{API_URL}/tenants", headers=headers)
-    tenants = response.json() if response.ok else []
-
-    return render_template("login.html", tenants=tenants)
+    return redirect(url_for("login"))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -30,7 +22,9 @@ def login():
             response = requests.post(
                 f"{API_URL}/auth/login", json={"email": email, "password": password}
             )
-
+            print(
+                "Response from API: ", response.json()
+            )  # Log the response for debugging
             if response.ok:
                 data = response.json()
                 session["token"] = data["access_token"]

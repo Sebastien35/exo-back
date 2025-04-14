@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -16,7 +18,6 @@
         margin: 0;
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #e0e7ff, #f3e8ff);
-        padding: 50px;
       }
 
       .container {
@@ -71,9 +72,7 @@
         background-color: rgba(255, 255, 255, 0.15);
       }
 
-      .logout {
-        float: right;
-      }
+      
 
       /* Modal Styles */
       .modal {
@@ -143,9 +142,7 @@
     </div>
     {% endif %} {% endwith %}
     <div class="container">
-      <div class="logout">
-        <a href="{{ url_for('logout') }}">Logout</a>
-      </div>
+
 
       <h1>Customers</h1>
 
@@ -227,3 +224,4 @@
     </script>
   </body>
 </html>
+{% endblock %}
