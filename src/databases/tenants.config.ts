@@ -6,8 +6,11 @@ import { CentralDataSource } from './centralDB.config';
 import { Consultation } from '../entity/consultation.entity';
 import { Customer } from '../entity/customer.entity';
 import { Request } from '../entity/request.entity';
+import { EncryptionService } from '../services/encryption.service';
 
 const tenantDataSources: Map<string, DataSource> = new Map();
+
+const encryptionService = new EncryptionService(); // Initialize the encryption service
 
 export async function getTenantDataSource(
   tenantOrId: string | Tenant
@@ -34,8 +37,8 @@ export async function getTenantDataSource(
     type: 'mariadb',
     host: tenant.dbHost,
     port: tenant.dbPort,
-    username: tenant.dbUsername,
-    password: tenant.dbPassword,
+    username: tenant.dbUsername ? encryptionService.decrypt(JSON.parse(tenant.dbUsername)) : undefined,
+    password: tenant.dbPassword ? encryptionService.decrypt(JSON.parse(tenant.dbPassword)) : undefined,
     database: tenant.dbName,
     entities: [Customer, Consultation, Request],
     synchronize: true, // Set manually for dev or apply migrations later

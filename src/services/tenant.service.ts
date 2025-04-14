@@ -6,18 +6,24 @@ import { CentralDataSource } from '../databases/centralDB.config';
 import { CreateTenantDto } from '../DTO/createTenant.dto';
 import * as bcrypt from 'bcrypt';
 import { getTenantDataSource } from '../databases/tenants.config';
+import { EncryptionService, EncryptedData } from './encryption.service';
+
 
 @Injectable()
 export class TenantService {
   private tenantRepository: Repository<Tenant>;
   private userRepository: Repository<User>;
 
-  constructor() {
+  constructor(
+    private readonly encryptionService: EncryptionService
+  ) {
     this.tenantRepository = CentralDataSource.getRepository(Tenant);
     this.userRepository = CentralDataSource.getRepository(User);
   }
 
-  async createTenant(createTenantDto: CreateTenantDto): Promise<{ tenant: Tenant; adminUser: User }> {
+  private readonly encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY!, 'hex'); // 32-byte hex key
+
+  async createTenant(createTenantDto: CreateTenantDto): Promise<{ tenant: Tenant; adminUser: User, encryptionService }> {
     const queryRunner = CentralDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -52,12 +58,14 @@ export class TenantService {
   
       // Save tenant in central DB
       tenant = this.tenantRepository.create({
-        name: createTenantDto.name,
+        name: createTenantDto.name, 
         description: createTenantDto.description,
         dbHost: createTenantDto.dbHost,
         dbPort: createTenantDto.dbPort,
-        dbUsername: createTenantDto.dbUsername,
-        dbPassword: createTenantDto.dbPassword,
+        dbUsername: createTenantDto.dbUsername 
+          ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbUsername)) 
+          : undefined,
+        dbPassword: createTenantDto.dbPassword ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbPassword)) : undefined,
         dbName: tenantDbName,
       });
   
@@ -84,7 +92,7 @@ export class TenantService {
     // ⬇️ This is safe to do *after* the transaction is committed
     await getTenantDataSource(tenant.id);
   
-    return { tenant, adminUser };
+    return { tenant, adminUser, encryptionService: this.encryptionService };
   }
 
   async getTenantById(id: string): Promise<Tenant | null> {

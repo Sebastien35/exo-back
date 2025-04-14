@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'; // Import TypeOrmModule
 import { User } from './entity/user.entity'; // Adjust the import path as necessary
 import { JwtService } from '@nestjs/jwt';
 import { Tenant } from './entity/tenant.entity'; // Adjust the import path as necessary
+import { EncryptionService } from './services/encryption.service';
 
 
 
@@ -27,7 +28,7 @@ import { Tenant } from './entity/tenant.entity'; // Adjust the import path as ne
     TypeOrmModule.forFeature([User]), // Add this to provide the UserRepository
   ],
   controllers: [EncryptionController, TenantController, AuthController],
-  providers: [TenantService, AuthService, JwtService],
+  providers: [TenantService, AuthService, JwtService, EncryptionService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

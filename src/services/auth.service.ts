@@ -1,13 +1,12 @@
 // src/auth/auth.service.ts
-
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../entity/user.entity';  // Adjust the import path as necessary
-import { CentralDataSource } from '../databases/centralDB.config';  // Central DB data source
-import { Tenant } from '../entity/tenant.entity';  // Adjust the import path as necessary
+import { User } from '../entity/user.entity';
+import { CentralDataSource } from '../databases/centralDB.config';
+import { Tenant } from '../entity/tenant.entity';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +14,7 @@ export class AuthService {
   private tenantRepository: Repository<Tenant>;
 
   constructor(
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtService,  // Inject JwtService
   ) {
     // Initialize repositories from CentralDataSource
     this.userRepository = CentralDataSource.getRepository(User);
@@ -46,8 +45,12 @@ export class AuthService {
   async login(user: User) {
     const payload = { sub: user.id, email: user.email, tenantId: user.tenantId };
 
+    // Generate a JWT using JwtService
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET || 'defaultSecretKey',  // Ensure the secret is loaded
+        expiresIn: '1h',  // You can change expiration based on your requirement
+      }),
     };
   }
 
