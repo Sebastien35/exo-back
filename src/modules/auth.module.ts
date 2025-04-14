@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from '../services/auth.service';
 import { AuthController } from '../controllers/auth.controller';
 import { User } from '../entity/user.entity';
+import 'dotenv/config'; 
 
 @Module({
   imports: [

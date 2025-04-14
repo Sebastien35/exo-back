@@ -1,2 +1,3 @@
+CREATE DATABASE IF NOT EXISTS `template_db`;
 GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' IDENTIFIED BY 'strongpassword';
 FLUSH PRIVILEGES;
