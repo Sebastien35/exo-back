@@ -137,6 +137,19 @@
         "
       >
         {{ message }}
+      <button
+        style="
+          background: none;
+          border: none;
+          color: #78350f;
+          font-weight: bold;
+          cursor: pointer;
+          float: right;
+        "
+        onclick="this.parentElement.style.display='none'"
+      >
+        &times;
+      </button>
       </div>
       {% endfor %}
     </div>
