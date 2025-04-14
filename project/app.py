@@ -5,15 +5,17 @@ import os
 app = Flask(__name__)
 app.secret_key = "your-secret-key"  # Change this to a secure secret key
 API_URL = "http://localhost:3000"
+ADMIN_PREFIX = "/admin"  # Prefix for all admin routes
+CUSTOMER_PREFIX = "/customer"  # Prefix for all customer routes
 
 
 @app.route("/")
 def index():
-    return redirect(url_for("login"))
+    return redirect(url_for("admin_login"))
 
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
+@app.route(f"{ADMIN_PREFIX}/login", methods=["GET", "POST"])
+def admin_login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -29,8 +31,8 @@ def login():
                 data = response.json()
                 session["token"] = data["access_token"]
                 return redirect(
-                    url_for("customers")
-                )  # 👈 redirect to the customers tab
+                    url_for("admin_customers")
+                )  # Redirect to admin customers
             else:
                 flash("Invalid credentials")
         except requests.RequestException:
@@ -39,10 +41,10 @@ def login():
     return render_template("login.html")
 
 
-@app.route("/customers")
-def customers():
+@app.route(f"{ADMIN_PREFIX}/customers")
+def admin_customers():
     if "token" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
 
     headers = {"Authorization": f'Bearer {session["token"]}'}
     try:
@@ -55,12 +57,11 @@ def customers():
     return render_template("customers.html", customers=customer_list)
 
 
-@app.route("/customers/create", methods=["POST"])
-def create_customer():
+@app.route(f"{ADMIN_PREFIX}/customers/create", methods=["POST"])
+def admin_create_customer():
     if "token" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
 
-    # Log to ensure Flask route is being hit
     print("Form data received: ", request.form)
 
     data = request.form.to_dict()
@@ -72,9 +73,9 @@ def create_customer():
     }
 
     try:
-        print("Sending data to NestJS API: ", data)  # Log data being sent
+        print("Sending data to NestJS API: ", data)
         response = requests.post(f"{API_URL}/customers", json=data, headers=headers)
-        print(response.json())  # Log the response for debugging
+        print(response.json())
         if not response.ok:
             flash(response.json().get("message", "Failed to create customer"))
         else:
@@ -82,13 +83,13 @@ def create_customer():
     except requests.RequestException:
         flash("Failed to connect to the server")
 
-    return redirect(url_for("customers"))
+    return redirect(url_for("admin_customers"))
 
 
-@app.route("/customers/<string:customer_id>/delete", methods=["POST"])
-def delete_customer(customer_id):
+@app.route(f"{ADMIN_PREFIX}/customers/<string:customer_id>/delete", methods=["POST"])
+def admin_delete_customer(customer_id):
     if "token" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
 
     headers = {"Authorization": f'Bearer {session["token"]}'}
     try:
@@ -102,46 +103,47 @@ def delete_customer(customer_id):
     except requests.RequestException:
         flash("Failed to connect to the server")
 
-    return redirect(url_for("customers"))
+    return redirect(url_for("admin_customers"))
 
 
-@app.route("/logout")
-def logout():
+@app.route(f"{ADMIN_PREFIX}/logout")
+def admin_logout():
     session.clear()
-    return redirect(url_for("login"))
+    return redirect(url_for("admin_login"))
 
 
-@app.route("/customers/login", methods=["GET", "POST"])
+@app.route(f"{CUSTOMER_PREFIX}/login", methods=["GET", "POST"])
 def customer_login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
         tenant_id = request.form.get("tenant")
 
-        # Authenticate user (check email, password, and tenant)
-        # Example of authentication, you need to implement the actual logic
         user = authenticate_customer(email, password, tenant_id)
         if user:
             session["user"] = user
             session["tenant_id"] = tenant_id
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("admin_dashboard"))
         else:
             flash("Invalid email or password")
-            return redirect(url_for("customer_login"))
+            return redirect(url_for("admin_customer_login"))
 
-    # On GET request, render the login page with the list of tenants
-    tenants = get_all_tenants()  # Fetch tenants from DB
+    tenants = get_all_tenants()
     return render_template("customer_login.html", tenants=tenants)
 
 
+@app.route(f"{ADMIN_PREFIX}/dashboard")
+def admin_dashboard():
+    # Add your dashboard logic here
+    return render_template("dashboard.html")
+
+
 def get_all_tenants():
-    # This function fetches all tenants from an external API
     try:
-        # Sending GET request to fetch tenant data
         response = requests.get(f"{API_URL}/tenants")
         if response.ok:
             print(response.json())
-            return response.json()  # Return the data as JSON
+            return response.json()
         else:
             print(response.json())
             return []
@@ -155,11 +157,12 @@ def authenticate_customer(email, password, tenant_id):
         payload = {"email": email, "password": password, "tenantId": tenant_id}
 
         response = requests.post(f"{API_URL}/customers/login", json=payload)
+        print(response.json())
 
         if response.status_code == 200:
             data = response.json()
             print("Login successful:", data)
-            return data  # This will contain the token and message
+            return data
         else:
             print("Login failed:", response.status_code, response.text)
             return None
