@@ -1,91 +1,98 @@
-import { Injectable } from '@nestjs/common'; // or your framework's DI
+import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Tenant } from '../entity/tenant.entity';
 import { User } from '../entity/user.entity';
-import { CentralDataSource } from '../databases/centralDB.config'; // Adjust the import path as necessary
-import { CreateTenantDto } from '../DTO/createTenant.dto'; // Adjust the import path as necessary
-import { AuthService } from './auth.service';
+import { CentralDataSource } from '../databases/centralDB.config';
+import { CreateTenantDto } from '../DTO/createTenant.dto';
 import * as bcrypt from 'bcrypt';
-import * as mysql from 'mysql2'; // Add mysql2 for creating the tenant database
+import { getTenantDataSource } from '../databases/tenants.config';
+import { EncryptionService, EncryptedData } from './encryption.service';
+
 
 @Injectable()
 export class TenantService {
   private tenantRepository: Repository<Tenant>;
   private userRepository: Repository<User>;
 
-  constructor() {
+  constructor(
+    private readonly encryptionService: EncryptionService
+  ) {
     this.tenantRepository = CentralDataSource.getRepository(Tenant);
     this.userRepository = CentralDataSource.getRepository(User);
   }
 
-  async createTenant(createTenantDto: CreateTenantDto): Promise<{ tenant: Tenant; adminUser: User }> {
-    // Start transaction in central DB
+  private readonly encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY!, 'hex'); // 32-byte hex key
+
+  async createTenant(createTenantDto: CreateTenantDto): Promise<{ tenant: Tenant; adminUser: User, encryptionService }> {
     const queryRunner = CentralDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
+  
+    let tenant: Tenant;
+    let adminUser: User;
+  
     try {
-      // Step 1: Create the database for the tenant using tenant credentials
-      const tenantDbName = createTenantDto.dbName || `tenant_${createTenantDto.name.toLowerCase().replace(/\s+/g, '_')}`;
-
-      // Set up the connection for the new tenant (using the tenant-specific credentials)
-      const tenantConnection = mysql.createConnection({
-        host: createTenantDto.dbHost, // e.g., localhost or a container name
-        user: createTenantDto.dbUsername,
-        password: createTenantDto.dbPassword,
-      });
-
-      tenantConnection.connect();
-
+      const tenantDbName =
+        createTenantDto.dbName ||
+        `tenant_${createTenantDto.name.toLowerCase().replace(/\s+/g, '_')}`;
+  
       // Check if the database already exists
-      const dbCheckQuery = `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${tenantDbName}'`;
-      const [rows]: any[] = await tenantConnection.promise().query(dbCheckQuery);
-
-      // Check if the database already exists
-      if (Array.isArray(rows) && rows.length === 0) {
-        // Create the database if it doesn't exist
-        await tenantConnection.promise().query(`CREATE DATABASE ${tenantDbName}`);
+      const dbExists = await queryRunner.query(
+        `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?`,
+        [tenantDbName],
+      );
+  
+      if (dbExists.length === 0) {
+        await queryRunner.query(`CREATE DATABASE \`${tenantDbName}\``);
         console.log(`Database ${tenantDbName} created successfully.`);
+        
+        // Automatically grant privileges for the 'app' user to the new database
+        await queryRunner.query(
+          `GRANT ALL PRIVILEGES ON \`${tenantDbName}\`.* TO 'app'@'%' IDENTIFIED BY ?`,
+          [createTenantDto.dbPassword],
+        );
+        console.log(`Privileges granted to 'app' user for database ${tenantDbName}`);
       } else {
         console.log(`Database ${tenantDbName} already exists.`);
       }
-
-      tenantConnection.end();
-
-      // Step 2: Create tenant record with the new database information
-      const tenant = this.tenantRepository.create({
-        name: createTenantDto.name,
+  
+      // Save tenant in central DB
+      tenant = this.tenantRepository.create({
+        name: createTenantDto.name, 
         description: createTenantDto.description,
         dbHost: createTenantDto.dbHost,
         dbPort: createTenantDto.dbPort,
-        dbUsername: createTenantDto.dbUsername,
-        dbPassword: createTenantDto.dbPassword,
+        dbUsername: createTenantDto.dbUsername 
+          ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbUsername)) 
+          : undefined,
+        dbPassword: createTenantDto.dbPassword ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbPassword)) : undefined,
         dbName: tenantDbName,
       });
-
+  
       await queryRunner.manager.save(tenant);
-
-      // Step 3: Create admin user for the tenant
-      const adminUser = this.userRepository.create({
+  
+      // Save admin user
+      adminUser = this.userRepository.create({
         email: createTenantDto.adminEmail,
         passwordHash: await this.hashPassword(createTenantDto.adminPassword),
         tenantId: tenant.id,
         role: 'admin',
       });
-
+  
       await queryRunner.manager.save(adminUser);
-
-      // Commit transaction
+  
       await queryRunner.commitTransaction();
-
-      return { tenant, adminUser };
     } catch (error) {
-      // Rollback on error
       await queryRunner.rollbackTransaction();
       throw error;
     } finally {
       await queryRunner.release();
     }
+  
+    // ⬇️ This is safe to do *after* the transaction is committed
+    await getTenantDataSource(tenant.id);
+  
+    return { tenant, adminUser, encryptionService: this.encryptionService };
   }
 
   async getTenantById(id: string): Promise<Tenant | null> {
@@ -102,7 +109,6 @@ export class TenantService {
   }
 
   async deleteTenant(id: string): Promise<void> {
-    // Note: You might want to soft delete instead
     await this.tenantRepository.delete(id);
   }
 
@@ -110,8 +116,8 @@ export class TenantService {
     return this.tenantRepository.find();
   }
 
-  async hashPassword(password: string): Promise<string> {   
-    const saltRounds = 10; // Adjust the salt rounds as necessary
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
   }
 }

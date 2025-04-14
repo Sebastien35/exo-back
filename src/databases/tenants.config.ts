@@ -1,41 +1,50 @@
 // src/databases/tenantLoader.ts
 import { DataSource } from 'typeorm';
-import { Tenant } from '../entity/tenant.entity'; // Adjust the import path as necessary
+import { Tenant } from '../entity/tenant.entity';
 import { CentralDataSource } from './centralDB.config';
 
+import { Consultation } from '../entity/consultation.entity';
+import { Customer } from '../entity/customer.entity';
+import { Request } from '../entity/request.entity';
+import { EncryptionService } from '../services/encryption.service';
 
 const tenantDataSources: Map<string, DataSource> = new Map();
 
-export async function getTenantDataSource(tenantId: string): Promise<DataSource> {
-  // Check if we already have a connection for this tenant
+const encryptionService = new EncryptionService(); // Initialize the encryption service
+
+export async function getTenantDataSource(
+  tenantOrId: string | Tenant
+): Promise<DataSource> {
+  const tenantId = typeof tenantOrId === 'string' ? tenantOrId : tenantOrId.id;
+
+  // Return existing connection if initialized
   if (tenantDataSources.has(tenantId)) {
-    const ds = tenantDataSources.get(tenantId)!;
-    if (ds.isInitialized) return ds;
+    const existing = tenantDataSources.get(tenantId)!;
+    if (existing.isInitialized) return existing;
   }
 
-  // Fetch tenant connection details from central DB
-  const tenant = await CentralDataSource.getRepository(Tenant).findOne({
-    where: { id: tenantId },
-  });
+  // If only ID is passed, fetch from central DB
+  const tenant: Tenant = typeof tenantOrId === 'string'
+    ? await CentralDataSource.getRepository(Tenant).findOneOrFail({ where: { id: tenantId } })
+    : tenantOrId;
 
-  if (!tenant) {
-    throw new Error(`Tenant ${tenantId} not found`);
+  // Ensure all required properties are present
+  if (!tenant.dbHost || !tenant.dbPort || !tenant.dbUsername || !tenant.dbPassword || !tenant.dbName) {
+    throw new Error(`Incomplete DB config for tenant ${tenant.id}`);
   }
 
-  // Create new DataSource for this tenant
   const tenantDataSource = new DataSource({
-    type: 'postgres',
-    host: tenant.dbHost || process.env.TENANT_DB_HOST,
-    port: tenant.dbPort || parseInt(process.env.TENANT_DB_PORT || '5432'),
-    username: tenant.dbUser || process.env.TENANT_DB_USER,
-    password: tenant.dbPassword || process.env.TENANT_DB_PASSWORD,
-    database: tenant.dbName || `tenant_${tenantId}`,
-    entities: [],
-    synchronize: process.env.NODE_ENV !== 'production',
-    logging: process.env.NODE_ENV === 'development',
+    type: 'mariadb',
+    host: tenant.dbHost,
+    port: tenant.dbPort,
+    username: tenant.dbUsername ? encryptionService.decrypt(JSON.parse(tenant.dbUsername)) : undefined,
+    password: tenant.dbPassword ? encryptionService.decrypt(JSON.parse(tenant.dbPassword)) : undefined,
+    database: tenant.dbName,
+    entities: [Customer, Consultation, Request],
+    synchronize: true, // Set manually for dev or apply migrations later
+    logging: true,     // Set to true for debug if needed
   });
 
-  // Initialize and store the connection
   await tenantDataSource.initialize();
   tenantDataSources.set(tenantId, tenantDataSource);
 
