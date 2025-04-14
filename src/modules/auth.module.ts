@@ -8,6 +8,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from '../services/auth.service';
 import { AuthController } from '../controllers/auth.controller';
 import { User } from '../entity/user.entity';
+import { JwtAuthGuard } from '../guard/jw-auth.guard'; // Adjust the import path as necessary
+import { TenantService } from '../services/tenant.service'; // Adjust the import path as necessary
+import { EncryptionService } from '../services/encryption.service'; // Adjust the import path as necessary
 
 console.log('JWT_SECRET in AuthModule:', process.env.JWT_SECRET);  // Debugging line
 
@@ -20,6 +23,7 @@ console.log('JWT_SECRET in AuthModule:', process.env.JWT_SECRET);  // Debugging 
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtAuthGuard, TenantService, EncryptionService],  // Include TenantService if needed
+  exports: [AuthService, JwtModule, JwtAuthGuard],  // Export AuthService and JwtModule if needed in other modules
 })
 export class AuthModule {}
