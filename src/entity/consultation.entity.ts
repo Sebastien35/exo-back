@@ -13,7 +13,7 @@ export class Consultation {
   @Column()
   montant: number;
 
-  @CreateDateColumn()
+  @Column()
   type: string;
 
   @Column()
