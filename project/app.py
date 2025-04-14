@@ -3,103 +3,98 @@ import requests
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'  # Change this to a secure secret key
-API_URL = 'http://localhost:3000'
+app.secret_key = "your-secret-key"  # Change this to a secure secret key
+API_URL = "http://localhost:3000"
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    
-    # Fetch tenants from the API
-    headers = {'Authorization': f'Bearer {session["token"]}'}
-    response = requests.get(f'{API_URL}/tenants', headers=headers)
-    tenants = response.json() if response.ok else []
-    
-    return render_template('index.html', tenants=tenants)
+    if "token" not in session:
+        return redirect(url_for("login"))
 
-@app.route('/login', methods=['GET', 'POST'])
+    # Fetch tenants from the API
+    headers = {"Authorization": f'Bearer {session["token"]}'}
+    response = requests.get(f"{API_URL}/tenants", headers=headers)
+    tenants = response.json() if response.ok else []
+
+    return render_template("index.html", tenants=tenants)
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
         try:
-            response = requests.post(f'{API_URL}/auth/login', json={
-                'email': email,
-                'password': password
-            })
-            
+            response = requests.post(
+                f"{API_URL}/auth/login", json={"email": email, "password": password}
+            )
+
             if response.ok:
                 data = response.json()
-                session['token'] = data['access_token']
-                return redirect(url_for('index'))
+                session["token"] = data["access_token"]
+                return redirect(
+                    url_for("customers")
+                )  # 👈 redirect to the customers tab
             else:
-                flash('Invalid credentials')
+                flash("Invalid credentials")
         except requests.RequestException:
-            flash('Failed to connect to the server')
-        
-    return render_template('login.html')
+            flash("Failed to connect to the server")
 
-@app.route('/tenants/create', methods=['GET', 'POST'])
-def create_tenant():
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        headers = {
-            'Authorization': f'Bearer {session["token"]}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.post(
-            f'{API_URL}/tenants',
-            json=request.form.to_dict(),
-            headers=headers
-        )
-        
-        if response.ok:
-            return redirect(url_for('index'))
-        flash('Failed to create tenant')
-    
-    return render_template('create_tenant.html')
+    return render_template("login.html")
 
-@app.route('/tenants/<string:id>/edit', methods=['GET', 'POST'])
-def edit_tenant(id):
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    
-    headers = {'Authorization': f'Bearer {session["token"]}'}
-    
-    if request.method == 'POST':
-        response = requests.put(
-            f'{API_URL}/tenants/{id}',
-            json=request.form.to_dict(),
-            headers=headers
-        )
-        
-        if response.ok:
-            return redirect(url_for('index'))
-        flash('Failed to update tenant')
-    
-    # Get current tenant data
-    response = requests.get(f'{API_URL}/tenants/{id}', headers=headers)
-    tenant = response.json() if response.ok else None
-    
-    return render_template('edit_tenant.html', tenant=tenant)
 
-@app.route('/tenants/<string:id>/delete', methods=['POST'])
-def delete_tenant(id):
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    
-    headers = {'Authorization': f'Bearer {session["token"]}'}
-    response = requests.delete(f'{API_URL}/tenants/{id}', headers=headers)
-    
-    if not response.ok:
-        flash('Failed to delete tenant')
-    
-    return redirect(url_for('index'))
+@app.route("/customers")
+def customers():
+    if "token" not in session:
+        return redirect(url_for("login"))
 
-if __name__ == '__main__':
+    headers = {"Authorization": f'Bearer {session["token"]}'}
+    try:
+        response = requests.get(f"{API_URL}/customers", headers=headers)
+        customer_list = response.json() if response.ok else []
+    except requests.RequestException:
+        flash("Failed to fetch customers")
+        customer_list = []
+
+    return render_template("customers.html", customers=customer_list)
+
+
+@app.route("/customers/create", methods=["POST"])
+def create_customer():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    # Log to ensure Flask route is being hit
+    print("Form data received: ", request.form)
+
+    data = request.form.to_dict()
+    data["passwordHash"] = data.pop("password")  # Move password to passwordHash
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        print("Sending data to NestJS API: ", data)  # Log data being sent
+        response = requests.post(f"{API_URL}/customers", json=data, headers=headers)
+        if not response.ok:
+            flash(response.json().get("message", "Failed to create customer"))
+        else:
+            flash("Customer created successfully!")
+    except requests.RequestException:
+        flash("Failed to connect to the server")
+
+    return redirect(url_for("customers"))
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

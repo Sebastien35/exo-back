@@ -11,6 +11,8 @@ import { User } from './entity/user.entity'; // Adjust the import path as necess
 import { JwtService } from '@nestjs/jwt';
 import { Tenant } from './entity/tenant.entity'; // Adjust the import path as necessary
 import { EncryptionService } from './services/encryption.service';
+import { CustomerController } from './controllers/customer.controller';
+import { CustomerModule } from './modules/customer.module';
 
 
 
@@ -25,9 +27,10 @@ import { EncryptionService } from './services/encryption.service';
     TypeOrmModule.forFeature([User, Tenant]), 
     ConfigModule.forRoot({ isGlobal: true }),
     EncryptionModule,
+    CustomerModule, // Import the CustomerModule here
     TypeOrmModule.forFeature([User]), // Add this to provide the UserRepository
   ],
-  controllers: [EncryptionController, TenantController, AuthController],
+  controllers: [EncryptionController, TenantController, AuthController, CustomerController],
   providers: [TenantService, AuthService, JwtService, EncryptionService],
 })
 export class AppModule {
