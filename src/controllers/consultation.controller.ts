@@ -128,4 +128,19 @@ export class ConsultationController {
     await consultationRepository.delete(id);
     return { message: 'Consultation deleted successfully' };
   }
+
+    @Get('customer/:customerId')
+    async findByCustomerId(@Param('customerId') customerId: string, @Request() req): Promise<Consultation[]> {  
+      const user: any = req.user;
+      const tenantDataSource = await getTenantDataSource(user.tenantId);
+      const consultationRepository = tenantDataSource.getRepository(Consultation);
+
+      if ((user.role !== 'admin') || ((user.id !== customerId) && user.id !== undefined)) {
+        console.log(user.role, user.id, customerId) 
+        throw new UnauthorizedException('You are not authorized to access this resource');
+      }
+      return consultationRepository.findBy({ customerId });
+      
+    }
+
 }
