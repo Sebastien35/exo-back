@@ -22,37 +22,39 @@ export class ConsultationController {
   @Post()
   async create(@Body() data: Partial<Consultation>, @Request() req): Promise<Consultation> {
     const user: User = req.user;
+    console.log('User:', user);
 
-    if (!user || !user.tenantId) {
+    if(!user.tenantId) {
       throw new UnauthorizedException('Tenant ID is required');
     }
 
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
-
-    data.customerId = user.id;
+    if(['admin', 'superadmin'].includes(user.role)) {
+      data.customerId = data.customerId;
+    } else {
+      data.customerId = user.id;
+    }
     const consultation = consultationRepository.create(data);
     return consultationRepository.save(consultation);
   }
 
+
   @Get()
   async findAll(@Request() req): Promise<Consultation[]> {
     const user: User = req.user;
-
+    console.log('User:', user);
     if (!user.tenantId) {
       throw new UnauthorizedException('Tenant ID is required');
+    }
+    if(!['admin', 'superadmin'].includes(user.role)) {
+      throw new UnauthorizedException('You are not authorized to access this resource');
     }
 
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 
-    if (user.role === 'admin') {
-      return consultationRepository.find();
-    }
-
-    return consultationRepository.find({
-      where: { customerId: user.id },
-    });
+    return consultationRepository.find();
   }
 
   @Get(':id')

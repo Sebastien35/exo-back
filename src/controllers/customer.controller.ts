@@ -69,6 +69,9 @@ export class CustomerController {
   @Get(':id')
   async findById(@Param('id') id: string, @Request() req): Promise<Customer> {
     const user = req.user;
+    if (!['admin', 'superadmin'].includes(user.role) && user.id !== id) {
+      throw new UnauthorizedException('You are not authorized to access this resource');
+    }
     const encryptionService = new EncryptionService(); // Assuming you have an EncryptionService for encryption
     if (!user.tenantId) {
       throw new UnauthorizedException('Tenant ID is required');
