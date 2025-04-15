@@ -61,7 +61,7 @@ export class TenantService {
         name: createTenantDto.name, 
         description: createTenantDto.description,
         dbHost: createTenantDto.dbHost,
-        dbPort: 3308,
+        dbPort: 3310,
         dbUsername: createTenantDto.dbUsername 
           ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbUsername)) 
           : undefined,
