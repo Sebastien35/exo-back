@@ -15,7 +15,7 @@ export class User {
   @Column()
   passwordHash: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ nullable: true })
   tenantId: string | null;
   
 

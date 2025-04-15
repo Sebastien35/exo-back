@@ -13,13 +13,13 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async createUser(email: string, password: string, tenantId: string): Promise<User> {
+  async createUser(email: string, password: string, tenantId: string | null, role: 'admin' | 'superadmin'): Promise<User> {
     const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new UnauthorizedException('User already exists');
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = this.userRepository.create({ email, passwordHash, tenantId, role: 'admin' });
+    const user = this.userRepository.create({ email, passwordHash, tenantId, role });
     return this.userRepository.save(user);
   }
 
