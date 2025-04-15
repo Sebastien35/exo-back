@@ -17,6 +17,7 @@ import { Customer } from '../entity/customer.entity';
 import { Consultation } from '../entity/consultation.entity';
 import { getTenantDataSource } from '../databases/tenants.config';
 
+
 @Controller('consultations')
 @UseGuards(JwtAuthGuard)
 export class ConsultationController {
