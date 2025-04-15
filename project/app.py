@@ -111,30 +111,7 @@ def admin_logout():
     session.clear()
     return redirect(url_for("admin_login"))
 
-@app.route("/customers/<string:customer_id>/consultations", methods=["GET"])
-def customer_consultations(customer_id):
-    if "token" not in session:
-        return redirect(url_for("login"))
 
-    headers = {"Authorization": f'Bearer {session["token"]}'}
-
-    try:
-        response = requests.get(
-            f"{API_URL}/consultations", headers=headers
-        )
-        all_consultations = response.json() if response.ok else []
-        consultations = [
-            c for c in all_consultations if c.get("customerId") == customer_id
-        ]
-    except requests.RequestException:
-        flash("Failed to fetch consultations")
-        consultations = []
-
-    return render_template(
-        "consultations.html",
-        consultations=consultations,
-        customer_id=customer_id
-    )
 
 
 @app.route(f"{CUSTOMER_PREFIX}/login", methods=["GET", "POST"])
@@ -161,10 +138,11 @@ def customer_login():
 def customer_dashboard():
     if "user" not in session:
         return redirect(url_for("customer_login"))
-
-    # Add your dashboard logic here
     return render_template("customer_dashboard.html")
 
+@app.route(f"{CUSTOMER_PREFIX}/<string:customer_id>/consultations", methods=["GET", "POST"])
+def customer_consultations(customer_id):
+    return render_template("customer_consultations.html", customer_id=customer_id)
 
 
 @app.route(f"{ADMIN_PREFIX}/dashboard")
