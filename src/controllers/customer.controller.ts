@@ -9,6 +9,7 @@ import {
     NotFoundException,
     ConflictException,
     Request,
+    UnauthorizedException,
   } from '@nestjs/common';
   import { CustomerService } from '../services/customer.service';
   import { Customer } from '../entity/customer.entity'; // Adjust the import path as necessary
@@ -29,6 +30,9 @@ export class CustomerController {
   @Get()
   async findAll(@Request() req): Promise<Customer[]> {
     const user: User = req.user;
+    if(req.user.role !== 'admin') {
+      throw new UnauthorizedException('You are not authorized to access this resource');
+    }
     const tenantId = user.tenantId;
     const tenantDataSource = await getTenantDataSource(tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
