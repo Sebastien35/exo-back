@@ -9,6 +9,7 @@ import { AuthService } from './services/auth.service';
 import { EncryptionModule } from './modules/encryption.module';
 import { CustomerModule } from './modules/customer.module';
 import { ConsultationModule } from './modules/consultation.module';
+import { RemboursementModule } from './modules/remboursement.module';
 
 import { EncryptionController } from './controllers/encryption.controller';
 import { TenantController } from './controllers/tenant.controller';
@@ -34,6 +35,7 @@ import { JwtService } from '@nestjs/jwt';
     EncryptionModule,
     CustomerModule,
     ConsultationModule,
+    RemboursementModule,
   ],
   controllers: [
     EncryptionController,
