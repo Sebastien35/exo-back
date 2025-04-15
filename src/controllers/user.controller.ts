@@ -23,9 +23,13 @@ export class UserController {
 
   // 🔐 Créer un superadmin (accessible sans token)
   @Post('register-superadmin')
-  async createSuperadmin(@Body() body: CreateSuperadminDto) {
+  async createSuperadmin(@Body() body: CreateUserDto) {
     const passwordHash = await bcrypt.hash(body.password, 10);
-    return this.userService.createRawUser(body.email, passwordHash, null, 'superadmin');
+    const user = await this.userService.createUser(
+      body.email,
+      passwordHash,
+      null,
+      'superadmin',)
   }
   
   
@@ -37,7 +41,7 @@ export class UserController {
     if (req.user.role !== 'superadmin') {
       throw new ForbiddenException('Only superadmins can create admins');
     }
-    return this.userService.createUser(body.email, body.password, body.tenantId);
+    return this.userService.createUser(body.email, body.password, body.tenantId ?? null, 'admin'); // ⚠️ body.tenantId ici
   }
   
 
