@@ -49,6 +49,7 @@ def admin_customers():
     headers = {"Authorization": f'Bearer {session["token"]}'}
     try:
         response = requests.get(f"{API_URL}/customers", headers=headers)
+        print("Response from API: ", response.json())  # Log the response for debugging
         customer_list = response.json() if response.ok else []
     except requests.RequestException:
         flash("Failed to fetch customers")
