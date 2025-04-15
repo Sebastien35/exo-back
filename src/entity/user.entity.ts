@@ -30,5 +30,5 @@ export class User {
   updatedAt: Date;
 
   @Column({ default: 'user' })
-role: 'admin' | 'superadmin';
+  role: 'admin' | 'superadmin';
 }

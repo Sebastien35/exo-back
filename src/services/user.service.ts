@@ -29,11 +29,18 @@ export class UserService {
       throw new UnauthorizedException('User already exists');
     }
   
-    const user = this.userRepository.create({ email, passwordHash, tenantId, role });
+    const userData: Partial<User> = {
+      email,
+      passwordHash,
+      role,
+      tenantId: tenantId ?? null,
+    };
+  
+    const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
   
-
+  
   async findAllByTenant(tenantId: string): Promise<User[]> {
     return this.userRepository.find({ where: { tenantId } });
   }

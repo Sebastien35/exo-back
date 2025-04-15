@@ -34,10 +34,6 @@ export class TenantController {
   @Get()
   async findAll(@Request() req): Promise<{ tenantId: string; tenantName: string }[]> {
     const user: User = req.user;
-    if (user.role !== 'admin') {
-      throw new UnauthorizedException('Only admins can access the tenant list');
-    }
-
     const tenants = await this.tenantService.getTenants();
     return tenants.map((tenant) => ({
       tenantId: tenant.id,
