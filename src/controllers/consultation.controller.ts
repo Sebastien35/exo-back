@@ -16,6 +16,7 @@ import { User } from '../entity/user.entity';
 import { Customer } from '../entity/customer.entity';
 import { Consultation } from '../entity/consultation.entity';
 import { getTenantDataSource } from '../databases/tenants.config';
+import * as bcrypt from 'bcrypt';
 
 
 @Controller('consultations')
@@ -26,15 +27,13 @@ export class ConsultationController {
   async create(@Body() data: Partial<Consultation>, @Request() req): Promise<Consultation> {
     const user: User = req.user;
 
-    if (!user || user.role !== 'customer') {
-      throw new UnauthorizedException('Only customers can create consultations');
+    if (!user || (user.role !== 'customer' && user.role !== 'admin')) {
+      throw new UnauthorizedException('You are not authorized to create a consultation');
     }
 
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
-
-    data.customerId = user.id;
-
+    
     const consultation = consultationRepository.create(data);
     return consultationRepository.save(consultation);
   }
@@ -120,4 +119,19 @@ export class ConsultationController {
     await consultationRepository.delete(id);
     return { message: 'Consultation deleted successfully' };
   }
+
+    @Get('customer/:customerId')
+    async findByCustomerId(@Param('customerId') customerId: string, @Request() req): Promise<Consultation[]> {  
+      const user: any = req.user;
+      const tenantDataSource = await getTenantDataSource(user.tenantId);
+      const consultationRepository = tenantDataSource.getRepository(Consultation);
+
+      if ((user.role !== 'admin') || ((user.id !== customerId) && user.id !== undefined)) {
+        console.log(user.role, user.id, customerId) 
+        throw new UnauthorizedException('You are not authorized to access this resource');
+      }
+      return consultationRepository.findBy({ customerId });
+      
+    }
+
 }
