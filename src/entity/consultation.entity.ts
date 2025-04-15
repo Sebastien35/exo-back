@@ -1,6 +1,8 @@
 // src/entities/User.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Customer } from './customer.entity';
+import { Remboursement } from './remboursement.entity';
+
 
 @Entity('consultations')
 export class Consultation {
