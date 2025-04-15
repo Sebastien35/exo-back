@@ -52,6 +52,11 @@ export class TenantService {
           [createTenantDto.dbPassword],
         );
         console.log(`Privileges granted to 'app' user for database ${tenantDbName}`);
+        await queryRunner.query(`
+          GRANT ALL PRIVILEGES ON \`${tenantDbName}\`.* TO 'tenant_user'@'%' IDENTIFIED BY ?`, 
+          [createTenantDto.dbPassword]
+        );
+        console.log(`Privileges granted to 'tenant_user' user for database ${tenantDbName}`);
       } else {
         console.log(`Database ${tenantDbName} already exists.`);
       }

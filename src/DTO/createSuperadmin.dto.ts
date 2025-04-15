@@ -1,6 +1,7 @@
+// src/DTO/createSuperadmin.dto.ts
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
-export class CreateUserDto {
+export class CreateSuperadminDto {
   @IsEmail()
   email: string;
 
