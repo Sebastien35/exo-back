@@ -53,18 +53,33 @@ export class DocumentController {
     @UseGuards(JwtAuthGuard)
     @Post()
     async create(@Request() req, @Body() body: Partial<Document>): Promise<Document> {
-        const user: User = req.user;
-        const tenantDataSource = await getTenantDataSource(user.tenantId);
-        const documentRepository = tenantDataSource.getRepository(Document);
+    const user: User = req.user;
+    const tenantDataSource = await getTenantDataSource(user.tenantId);
+    const documentRepository = tenantDataSource.getRepository(Document);
 
-        const existing = await documentRepository.findOne({ where: { name: body.name } });
-        if (existing) {
-        throw new ConflictException('A document with this name already exists');
-        }
+    const { name, extension, description } = body;
 
-        const newDoc = documentRepository.create(body);
-        return await documentRepository.save(newDoc);
+    // Vérification des champs requis
+    if (!name || !extension || !description) {
+        throw new ConflictException('Missing required fields: name, extension, or description');
     }
+
+    // Vérifie si un document avec le même nom existe déjà
+    const existing = await documentRepository.findOne({ where: { name } });
+    if (existing) {
+        throw new ConflictException('A document with this name already exists');
+    }
+
+    // Création et sauvegarde du document
+    const newDoc = documentRepository.create({
+        name,
+        extension,
+        description,
+    });
+
+    return await documentRepository.save(newDoc);
+    }
+
 
     // 🔐 Protected route - Update document
     @UseGuards(JwtAuthGuard)

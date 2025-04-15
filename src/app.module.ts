@@ -20,6 +20,10 @@ import { User } from './entity/user.entity';
 import { Tenant } from './entity/tenant.entity';
 import { Consultation } from './entity/consultation.entity';
 
+import { DocumentModule } from './modules/document.module';
+import { DocumentController } from './controllers/document.controller';
+import { DocumentService } from './services/document.service';
+
 import { JwtService } from '@nestjs/jwt';
 
 @Module({
@@ -36,12 +40,14 @@ import { JwtService } from '@nestjs/jwt';
     CustomerModule,
     ConsultationModule,
     RemboursementModule,
+    DocumentModule,
   ],
   controllers: [
     EncryptionController,
     TenantController,
     AuthController,
     CustomerController,
+    DocumentController,
   ],
   providers: [
     TenantService,

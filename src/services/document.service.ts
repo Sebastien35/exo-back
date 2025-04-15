@@ -8,7 +8,7 @@ import { Document } from '../entity/document.entity';
 export class DocumentService {
   constructor(
     @InjectRepository(Document)
-    private readonly documentRepository: Repository<Document>,
+    private documentRepository: Repository<Document>,
   ) {}
 
   async create(documentData: Partial<Document>): Promise<Document> {
