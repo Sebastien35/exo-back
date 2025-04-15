@@ -15,7 +15,20 @@ export class TenantController {
 
   @Get()
   async findAll() {
-    return this.tenantService.getTenants();
+    const tenants = await this.tenantService.getTenants();
+    let tenantArray = [
+      {
+        id: 'string',
+        name: 'string',
+      },
+    ];
+    let returnData: { tenantId: string; tenantName: string }[] = [];
+    for (const tenant of tenants) {
+      tenantArray[0].id = tenant.id;
+      tenantArray[0].name = tenant.name;
+      returnData.push({ tenantId: tenant.id, tenantName: tenant.name });
+    }
+    return returnData;
   }
 
   @Get(':id')

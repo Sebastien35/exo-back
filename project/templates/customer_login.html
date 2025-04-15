@@ -44,10 +44,10 @@
                     name="tenant"
                     required
                 >
-                    <option value="" disabled selected>Select a tenant</option>
-                    {% for tenant in tenants %}
-                        <option value="{{ tenant.id }}">{{ tenant.name }}</option>
-                    {% endfor %}
+                <option value="" disabled selected>Select a tenant</option>
+                {% for tenant in tenants %}
+                    <option value="{{ tenant.tenantId }}">{{ tenant.tenantName }}</option>
+                {% endfor %}
                 </select>
             </div>
 
