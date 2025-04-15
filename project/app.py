@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "your-secret-key"  # Change this to a secure secret key
 API_URL = "http://localhost:3000"
 ADMIN_PREFIX = "/admin"  # Prefix for all admin routes
-CUSTOMER_PREFIX = "/customers"  # Prefix for all customer routes
+CUSTOMER_PREFIX = "/customer"  # Prefix for all customer routes
 
 
 @app.route("/")
@@ -112,30 +112,7 @@ def admin_logout():
     session.clear()
     return redirect(url_for("admin_login"))
 
-@app.route("/customers/<string:customer_id>/consultations", methods=["GET"])
-def customer_consultations(customer_id):
-    if "token" not in session:
-        return redirect(url_for("login"))
 
-    headers = {"Authorization": f'Bearer {session["token"]}'}
-
-    try:
-        response = requests.get(
-            f"{API_URL}/consultations", headers=headers
-        )
-        all_consultations = response.json() if response.ok else []
-        consultations = [
-            c for c in all_consultations if c.get("customerId") == customer_id
-        ]
-    except requests.RequestException:
-        flash("Failed to fetch consultations")
-        consultations = []
-
-    return render_template(
-        "consultations.html",
-        consultations=consultations,
-        customer_id=customer_id
-    )
 
 
 @app.route(f"{CUSTOMER_PREFIX}/login", methods=["GET", "POST"])
@@ -162,11 +139,58 @@ def customer_login():
 def customer_dashboard():
     if "user" not in session:
         return redirect(url_for("customer_login"))
-
-    # Add your dashboard logic here
     return render_template("customer_dashboard.html")
 
+@app.route(f"{CUSTOMER_PREFIX}/<string:customer_id>/consultations", methods=["GET", "POST"])
+def customer_consultations(customer_id):
+    if "token" not in session:
+        return redirect(url_for("admin_login"))
 
+    if request.method == "POST":
+        success = create_consultation(customer_id, request.form)
+        if success:
+            flash("Consultation enregistrée avec succès", "success")
+        else:
+            flash("Erreur lors de la création de la consultation", "danger")
+        return redirect(url_for("customer_consultations", customer_id=customer_id))
+
+    consultations = getCustomerConsultations(customer_id)
+    return render_template("customer_consultations.html", customer_id=customer_id, consultations=consultations)
+
+def getCustomerConsultations(customer_id):
+    if "token" not in session:
+        return []
+
+    headers = {"Authorization": f'Bearer {session["token"]}'}
+    try:
+        response = requests.get(f"{API_URL}/consultations/customer/{customer_id}", headers=headers)
+        print(response.json())  # Log the response for debugging
+        if response.ok:
+            return response.json()
+        else:
+            print(f"Error fetching consultations: {response.text}")
+            return []
+    except requests.RequestException as e:
+        print(f"Request error: {e}")
+        return []
+
+
+def create_consultation(customer_id, form_data):
+    headers = {"Authorization": f"Bearer {session['token']}"}
+    payload = {
+        "consultationDate": form_data.get("consultationDate"),
+        "montant": float(form_data.get("montant")),
+        "type": form_data.get("type"),
+        "customerId": customer_id
+    }
+
+    try:
+        response = requests.post(f"{API_URL}/consultations", json=payload, headers=headers)
+        print("Response from API: ", response.json())  # Log the response for debugging
+        return response.ok  
+    except requests.RequestException as e:
+        print(f"Error creating consultation: {e}")
+        return False
 
 @app.route(f"{ADMIN_PREFIX}/dashboard")
 def admin_dashboard():

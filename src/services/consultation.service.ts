@@ -12,7 +12,6 @@ export class ConsultationService {
   }
 
   async create(data: Partial<Consultation>): Promise<Consultation> {
-    console.log('Données reçues dans create consultation :', data);
 
     const consultation = this.consultationRepository.create(data);
     return this.consultationRepository.save(consultation);

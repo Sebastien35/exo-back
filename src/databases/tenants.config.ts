@@ -7,6 +7,7 @@ import { Consultation } from '../entity/consultation.entity';
 import { Customer } from '../entity/customer.entity';
 import { Request } from '../entity/request.entity';
 import { EncryptionService } from '../services/encryption.service';
+import { Remboursement } from '../entity/remboursement.entity';
 
 const tenantDataSources: Map<string, DataSource> = new Map();
 
@@ -40,7 +41,7 @@ export async function getTenantDataSource(
     username: tenant.dbUsername ? encryptionService.decrypt(JSON.parse(tenant.dbUsername)) : undefined,
     password: tenant.dbPassword ? encryptionService.decrypt(JSON.parse(tenant.dbPassword)) : undefined,
     database: tenant.dbName,
-    entities: [Customer, Consultation, Request],
+    entities: [Customer, Consultation, Remboursement, Request],
     synchronize: true, // Set manually for dev or apply migrations later
     logging: true,     // Set to true for debug if needed
   });
