@@ -23,18 +23,20 @@ export class TenantService {
 
   private readonly encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY!, 'hex'); // 32-byte hex key
 
-  async createTenant(createTenantDto: CreateTenantDto): Promise<Tenant> {
+  async createTenant(createTenantDto: CreateTenantDto): Promise<{ tenant: Tenant; adminUser: User, encryptionService }> {
     const queryRunner = CentralDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
   
     let tenant: Tenant;
+    let adminUser: User;
   
     try {
       const tenantDbName =
         createTenantDto.dbName ||
         `tenant_${createTenantDto.name.toLowerCase().replace(/\s+/g, '_')}`;
   
+      // Check if the database already exists
       const dbExists = await queryRunner.query(
         `SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?`,
         [tenantDbName],
@@ -42,29 +44,40 @@ export class TenantService {
   
       if (dbExists.length === 0) {
         await queryRunner.query(`CREATE DATABASE \`${tenantDbName}\``);
+        console.log(`Database ${tenantDbName} created successfully.`);
+        
+        // Automatically grant privileges for the 'app' user to the new database
         await queryRunner.query(
           `GRANT ALL PRIVILEGES ON \`${tenantDbName}\`.* TO 'app'@'%' IDENTIFIED BY ?`,
           [createTenantDto.dbPassword],
         );
+        console.log(`Privileges granted to 'app' user for database ${tenantDbName}`);
+        await queryRunner.query(`
+          GRANT ALL PRIVILEGES ON \`${tenantDbName}\`.* TO 'tenant_user'@'%' IDENTIFIED BY ?`, 
+          [createTenantDto.dbPassword]
+        );
+        console.log(`Privileges granted to 'tenant_user' user for database ${tenantDbName}`);
+      } else {
+        console.log(`Database ${tenantDbName} already exists.`);
       }
   
+      // Save tenant in central DB
       tenant = this.tenantRepository.create({
-        name: createTenantDto.name,
+        name: createTenantDto.name, 
         description: createTenantDto.description,
         dbHost: createTenantDto.dbHost,
-        dbPort: 3308,
-        dbUsername: createTenantDto.dbUsername
-          ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbUsername))
+        dbPort: 3310,
+        dbUsername: createTenantDto.dbUsername 
+          ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbUsername)) 
           : undefined,
-        dbPassword: createTenantDto.dbPassword
-          ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbPassword))
-          : undefined,
+        dbPassword: createTenantDto.dbPassword ? JSON.stringify(this.encryptionService.encrypt(createTenantDto.dbPassword)) : undefined,
         dbName: tenantDbName,
       });
   
       await queryRunner.manager.save(tenant);
   
-      const adminUser = this.userRepository.create({
+      // Save admin user
+      adminUser = this.userRepository.create({
         email: createTenantDto.adminEmail,
         passwordHash: await this.hashPassword(createTenantDto.adminPassword),
         tenantId: tenant.id,
@@ -81,10 +94,11 @@ export class TenantService {
       await queryRunner.release();
     }
   
+    // ⬇️ This is safe to do *after* the transaction is committed
     await getTenantDataSource(tenant.id);
-    return tenant; // ✅ Retourne uniquement le tenant
-  }
   
+    return { tenant, adminUser, encryptionService: this.encryptionService };
+  }
 
   async getTenantById(id: string): Promise<Tenant | null> {
     return this.tenantRepository.findOne({ where: { id } });
