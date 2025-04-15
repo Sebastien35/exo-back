@@ -188,7 +188,27 @@
             <td>{{ customer.address }}</td>
             <td>{{ customer.rib }}</td>
             <td>{{ customer.numero_ss }}</td>
-            <td>
+            <td class="text-center">
+              <div class="flex flex-col items-start space-y-2">
+                <form method="get" action="/customers/{{ customer.id }}/consultations">
+                  <button
+                    type="submit"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Voir consultations
+                  </button>
+                </form>
+                <form method="post" action="/customers/{{ customer.id }}/delete">
+                  <button
+                    type="submit"
+                    class="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+              </div>
+            </td>
+            <!-- <td>
               <form
                 method="post"
                 action="/customers/{{ customer.id }}/delete"
@@ -197,6 +217,13 @@
                 <button type="submit">Delete</button>
               </form>
             </td>
+            <td>
+              <form method="get" action="/customers/{{ customer.id }}/consultations" style="display: inline">
+                <button type="submit" style="margin-left: 8px; background-color: #4f46e5; color: white; padding: 6px 10px; border-radius: 6px; border: none;">
+                  Voir consultations
+                </button>
+              </form>
+            </td> -->
           </tr>
           {% endfor %}
         </tbody>

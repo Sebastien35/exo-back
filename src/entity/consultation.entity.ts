@@ -1,6 +1,6 @@
 // src/entities/User.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Customer } from './customer.entity'; // Adjust the import path as necessary
+import { Customer } from './customer.entity';
 
 @Entity('consultations')
 export class Consultation {
@@ -18,4 +18,14 @@ export class Consultation {
 
   @Column()
   customerId: string;
+
+  @ManyToOne(() => Customer, { nullable: false })
+  @JoinColumn({ name: 'customerId' })
+  customer: Customer;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
