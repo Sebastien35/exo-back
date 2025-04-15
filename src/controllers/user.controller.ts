@@ -12,8 +12,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
-import { CreateAdminDto } from '../DTO/createAdmin.dto';
-import { CreateSuperadminDto } from '../DTO/createSuperadmin.dto';
+import { CreateUserDto } from '../DTO/createUser.dto';
 import { JwtAuthGuard } from '../guard/jw-auth.guard';
 import * as bcrypt from 'bcrypt';
 
@@ -24,20 +23,17 @@ export class UserController {
   // 🔐 Créer un superadmin (accessible sans token)
   @Post('register-superadmin')
   async createSuperadmin(@Body() body: CreateUserDto) {
-    const passwordHash = await bcrypt.hash(body.password, 10);
     const user = await this.userService.createUser(
       body.email,
-      passwordHash,
+      body.password,
       null,
       'superadmin',)
+    return user;
   }
   
-  
-
-  // 🔐 Créer un admin (réservé aux superadmins)
   @UseGuards(JwtAuthGuard)
   @Post()
-  async createAdmin(@Body() body: CreateAdminDto, @Request() req) {
+  async createAdmin(@Body() body: CreateUserDto, @Request() req) {
     if (req.user.role !== 'superadmin') {
       throw new ForbiddenException('Only superadmins can create admins');
     }
@@ -60,7 +56,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() body: Partial<CreateAdminDto>, @Request() req) {
+  async update(@Param('id') id: string, @Body() body: Partial<CreateUserDto>, @Request() req) {
     return this.userService.updateUser(id, body, req.user);
   }
 

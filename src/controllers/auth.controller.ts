@@ -6,6 +6,7 @@ import { CreateAdminDto } from '../DTO/createAdmin.dto';
 import { CreateSuperadminDto } from '../DTO/createSuperadmin.dto';
 import { TenantService } from '../services/tenant.service';
 import { getTenantDataSource } from 'src/databases/tenants.config';
+import { CreateUserDto } from '../DTO/createUser.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -15,7 +16,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Body() body: CreateSuperadminDto | CreateAdminDto) {
+  async login(@Body() body: CreateUserDto) {
     const user = await this.authService.validateUser(body.email, body.password);
     return this.authService.login(user);
   }

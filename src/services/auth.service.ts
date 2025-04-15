@@ -22,20 +22,29 @@ export class AuthService {
 
   // Validate user credentials
   async validateUser(email: string, password: string): Promise<User> {
+    // First find without relations
     const user = await this.userRepository.findOne({
-      where: { email },
-      relations: ['tenant'],
+      where: { email }
     });
-
+    console.log(user)
+  
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+  
+    // Only load tenant relation for admin users
+    if (user.role === 'admin') {
+      await this.userRepository.findOne({
+        where: { email },
+        relations: ['tenant']
+      });
+    }
+  
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+  
     return user;
   }
 
