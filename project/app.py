@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "your-secret-key"  # Change this to a secure secret key
 API_URL = "http://localhost:3000"
 ADMIN_PREFIX = "/admin"  # Prefix for all admin routes
-CUSTOMER_PREFIX = "/customers   "  # Prefix for all customer routes
+CUSTOMER_PREFIX = "/customers"  # Prefix for all customer routes
 
 
 @app.route("/")
