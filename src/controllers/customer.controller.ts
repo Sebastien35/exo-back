@@ -67,8 +67,23 @@ export class CustomerController {
   // Protected route
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<Customer> {
-    return this.customerService.findById(id);
+  async findById(@Param('id') id: string, @Request() req): Promise<Customer> {
+    const user = req.user;
+    const encryptionService = new EncryptionService(); // Assuming you have an EncryptionService for encryption
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+    const tenantDataSource = await getTenantDataSource(user.tenantId);
+    const customerRepository = tenantDataSource.getRepository(Customer);
+    const customer = await customerRepository.findOne({ where: { id } });
+    if (!customer) {
+      throw new NotFoundException('Customer not found');
+    }
+    customer.numero_ss = customer.numero_ss ? encryptionService.decrypt(JSON.parse(customer.numero_ss)) as string : '';
+    customer.rib = customer.rib ? encryptionService.decrypt(JSON.parse(customer.rib)) as string : '';
+    customer.address = customer.address ? encryptionService.decrypt(JSON.parse(customer.address)) as string : '';
+
+    return customer;
   }
 
   @UseGuards(JwtAuthGuard)
