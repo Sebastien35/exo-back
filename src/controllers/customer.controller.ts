@@ -52,8 +52,6 @@ export class CustomerController {
     return this.customerService.findById(id);
   }
 
-  // Protected route
-  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Request() req, @Body() body: Partial<Customer>): Promise<Customer> {
     const user: User = req.user;

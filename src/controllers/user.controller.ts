@@ -32,7 +32,7 @@ export class UserController {
   }
   
   @UseGuards(JwtAuthGuard)
-  @Post()
+  @Post('/register-admin')
   async createAdmin(@Body() body: CreateUserDto, @Request() req) {
     if (req.user.role !== 'superadmin') {
       throw new ForbiddenException('Only superadmins can create admins');
