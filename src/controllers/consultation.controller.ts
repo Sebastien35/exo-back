@@ -1,13 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Request } from '@nestjs/common';
 import { ConsultationService } from '../services/consultation.service';
 import { Consultation } from '../entity/consultation.entity';
+import { User } from 'src/entity/user.entity';
+import { JwtAuthGuard } from '../guard/jw-auth.guard'; // Adjust the import path as necessary
+import { UseGuards } from '@nestjs/common';
+
 
 @Controller('consultations')
+@UseGuards(JwtAuthGuard)
 export class ConsultationController {
   constructor(private readonly consultationService: ConsultationService) {}
+  
 
   @Post()
-  async create(@Body() data: Partial<Consultation>): Promise<Consultation> {
+  async create(@Body() data: Partial<Consultation>, @Request() req): Promise<Consultation> {
+    const customer = req.user;
     return this.consultationService.create(data);
   }
 

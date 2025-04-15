@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "your-secret-key"  # Change this to a secure secret key
 API_URL = "http://localhost:3000"
 ADMIN_PREFIX = "/admin"  # Prefix for all admin routes
-CUSTOMER_PREFIX = "/customer"  # Prefix for all customer routes
+CUSTOMER_PREFIX = "/customers   "  # Prefix for all customer routes
 
 
 @app.route("/")
@@ -106,7 +106,7 @@ def admin_delete_customer(customer_id):
     return redirect(url_for("admin_customers"))
 
 
-@app.route(f"{ADMIN_PREFIX}/logout")
+@app.route(f"/logout")
 def admin_logout():
     session.clear()
     return redirect(url_for("admin_login"))
@@ -148,13 +148,23 @@ def customer_login():
         if user:
             session["user"] = user
             session["tenant_id"] = tenant_id
-            return redirect(url_for("admin_dashboard"))
+            return redirect(url_for("user_dashboard"))
         else:
             flash("Invalid email or password")
-            return redirect(url_for("admin_customer_login"))
+            return redirect(url_for("customer_login"))
 
     tenants = get_all_tenants()
     return render_template("customer_login.html", tenants=tenants)
+
+
+@app.route(f"{CUSTOMER_PREFIX}/dashboard")
+def customer_dashboard():
+    if "user" not in session:
+        return redirect(url_for("customer_login"))
+
+    # Add your dashboard logic here
+    return render_template("customer_dashboard.html")
+
 
 
 @app.route(f"{ADMIN_PREFIX}/dashboard")
