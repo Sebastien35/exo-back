@@ -1,47 +1,48 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Put,
-    Delete,
-    Param,
-    Body,
-    NotFoundException,
-    ConflictException,
-    Request,
-    UnauthorizedException,
-  } from '@nestjs/common';
-  import { CustomerService } from '../services/customer.service';
-  import { Customer } from '../entity/customer.entity'; // Adjust the import path as necessary
-  import { CustomerLoginDto } from '../DTO/customerLogin.dto'; // Adjust the import path as necessary
-  import * as bcrypt from 'bcrypt';
-  import { getTenantDataSource } from '../databases/tenants.config'; // Adjust the import path as necessary
-  import { JwtService } from '@nestjs/jwt';
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  NotFoundException,
+  ConflictException,
+  Request,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { CustomerService } from '../services/customer.service';
+import { Customer } from '../entity/customer.entity'; // Adjust the import path as necessary
+import { CustomerLoginDto } from '../DTO/customerLogin.dto'; // Adjust the import path as necessary
+import * as bcrypt from 'bcrypt';
+import { getTenantDataSource } from '../databases/tenants.config'; // Adjust the import path as necessary
+import { JwtService } from '@nestjs/jwt';
+import { EncryptionService } from '../services/encryption.service'; // Adjust the import path as necessary
 import { User } from 'src/entity/user.entity';
 import { JwtAuthGuard } from '../guard/jw-auth.guard'; // Adjust the import path as necessary
 import { UseGuards } from '@nestjs/common';
 
 @Controller('customers')
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService) {}
+  constructor(private readonly customerService: CustomerService) { }
 
   // Protected route
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Request() req): Promise<Customer[]> {
     const user: User = req.user;
-  
+
     if (user.role !== 'admin') {
       throw new UnauthorizedException('You are not authorized to access this resource');
     }
-  
+
     if (!user.tenantId) {
       throw new UnauthorizedException('Tenant ID is required');
     }
-  
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
-  
+
     return customerRepository.find();
   }
 
@@ -52,32 +53,43 @@ export class CustomerController {
     return this.customerService.findById(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Request() req, @Body() body: Partial<Customer>): Promise<Customer> {
     const user: User = req.user;
-  
+    console.log('User:', user);
+
     if (!user.tenantId) {
       throw new UnauthorizedException('Tenant ID is required');
     }
-  
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
-  
+    const encryptionService = new EncryptionService(); // Assuming you have an EncryptionService for encryption
+
     const hashPassword = await bcrypt.hash(body.passwordHash, 10);
-  
+    const cSS = body.numero_ss ? encryptionService.encrypt(body.numero_ss) : null;
+    const cRIB = body.rib ? encryptionService.encrypt(body.rib) : null;
+    const cAddress = body.address ? encryptionService.encrypt(body.address) : null;
+
+    body.numero_ss = cSS ? JSON.stringify(cSS) : undefined;
+    body.rib = cRIB ? JSON.stringify(cRIB) : undefined;
+    body.address = cAddress ? JSON.stringify(cAddress) : undefined;
+    body.rib = cRIB ? JSON.stringify(cRIB) : undefined;
+
     const existingCustomer = await customerRepository.findOne({
       where: { email: body.email },
     });
-  
+
     if (existingCustomer) {
       throw new ConflictException('Customer with this email already exists');
     }
-  
+
     body.passwordHash = hashPassword;
     const newCustomer = customerRepository.create(body);
     return await customerRepository.save(newCustomer);
   }
-  
+
 
   // Protected route
   @UseGuards(JwtAuthGuard)
@@ -122,4 +134,3 @@ export class CustomerController {
   }
 }
 
-  
