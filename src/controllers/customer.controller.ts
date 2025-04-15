@@ -29,7 +29,7 @@ export class CustomerController {
   // Protected route
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Request() req): Promise<Customer[]> {
+  async findAll(@Request() req): Promise<{ id: string; name: string; email: string, lastname: string }[]> {
     const user: User = req.user;
 
     if (user.role !== 'admin') {
@@ -43,7 +43,25 @@ export class CustomerController {
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
 
-    return customerRepository.find();
+    const customers = await customerRepository.find();
+    let returnData: { id: string; name: string; email: string, lastname: string }[] = [];
+    let customerObject = [
+      {
+        id: 'string',
+        name: 'string',
+        email: 'string',
+        lastname: 'string',  
+      },
+    ];
+    for (const customer of customers) {
+      customerObject[0].id = customer.id;
+      customerObject[0].name = customer.name;
+      customerObject[0].email = customer.email;
+      customerObject[0].lastname = customer.lastname;
+      returnData.push({ id: customerObject[0].id, name: customerObject[0].name, email: customerObject[0].email, lastname: customerObject[0].lastname });
+    }
+    return returnData;
+    
   }
 
   // Protected route
