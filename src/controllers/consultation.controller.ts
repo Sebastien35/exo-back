@@ -13,54 +13,56 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/jw-auth.guard';
 import { User } from '../entity/user.entity';
-import { Customer } from '../entity/customer.entity';
 import { Consultation } from '../entity/consultation.entity';
 import { getTenantDataSource } from '../databases/tenants.config';
-
 
 @Controller('consultations')
 @UseGuards(JwtAuthGuard)
 export class ConsultationController {
-  // Créer une consultation
   @Post()
   async create(@Body() data: Partial<Consultation>, @Request() req): Promise<Consultation> {
     const user: User = req.user;
 
-    if (!user || user.role !== 'customer') {
-      throw new UnauthorizedException('Only customers can create consultations');
+    if (!user || !user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
     }
 
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 
     data.customerId = user.id;
-
     const consultation = consultationRepository.create(data);
     return consultationRepository.save(consultation);
   }
 
-  // Voir toutes les consultations
   @Get()
   async findAll(@Request() req): Promise<Consultation[]> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 
     if (user.role === 'admin') {
-      // L’admin voit toutes les consultations du tenant
       return consultationRepository.find();
     }
 
-    // Le customer voit uniquement ses propres consultations
     return consultationRepository.find({
       where: { customerId: user.id },
     });
   }
 
-  // Voir une consultation spécifique
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req): Promise<Consultation> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 
@@ -70,7 +72,6 @@ export class ConsultationController {
       throw new NotFoundException('Consultation not found');
     }
 
-    // Vérification des droits
     if (user.role !== 'admin' && consultation.customerId !== user.id) {
       throw new UnauthorizedException('You are not authorized to access this consultation');
     }
@@ -78,10 +79,14 @@ export class ConsultationController {
     return consultation;
   }
 
-  // Modifier une consultation
   @Put(':id')
   async update(@Param('id') id: string, @Body() updates: Partial<Consultation>, @Request() req): Promise<Consultation> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 
@@ -91,7 +96,6 @@ export class ConsultationController {
       throw new NotFoundException('Consultation not found');
     }
 
-    // Seul l’admin peut modifier toutes les consultations
     if (user.role !== 'admin' && consultation.customerId !== user.id) {
       throw new UnauthorizedException('You are not authorized to update this consultation');
     }
@@ -100,10 +104,14 @@ export class ConsultationController {
     return consultationRepository.save(consultation);
   }
 
-  // Supprimer une consultation
   @Delete(':id')
   async remove(@Param('id') id: string, @Request() req): Promise<{ message: string }> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const consultationRepository = tenantDataSource.getRepository(Consultation);
 

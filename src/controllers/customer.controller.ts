@@ -25,53 +25,70 @@ import { UseGuards } from '@nestjs/common';
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
-  // 🔐 Protected route
+  // Protected route
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Request() req): Promise<Customer[]> {
     const user: User = req.user;
-    if(req.user.role !== 'admin') {
+  
+    if (user.role !== 'admin') {
       throw new UnauthorizedException('You are not authorized to access this resource');
     }
-    const tenantId = user.tenantId;
-    const tenantDataSource = await getTenantDataSource(tenantId);
+  
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+  
+    const tenantDataSource = await getTenantDataSource(user.tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
-    return await customerRepository.find();
+  
+    return customerRepository.find();
   }
 
-  // 🔐 Protected route
+  // Protected route
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findById(@Param('id') id: string): Promise<Customer> {
     return this.customerService.findById(id);
   }
 
-  // 🔐 Protected route
+  // Protected route
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Request() req, @Body() body: Partial<Customer>): Promise<Customer> {
     const user: User = req.user;
-    const tenantId = user.tenantId;
-    const tenantDataSource = await getTenantDataSource(tenantId);
+  
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+  
+    const tenantDataSource = await getTenantDataSource(user.tenantId);
     const customerRepository = tenantDataSource.getRepository(Customer);
+  
     const hashPassword = await bcrypt.hash(body.passwordHash, 10);
-    const existingCustomer = await customerRepository.findOne({ where: { email: body.email } });
-    if(existingCustomer) {
+  
+    const existingCustomer = await customerRepository.findOne({
+      where: { email: body.email },
+    });
+  
+    if (existingCustomer) {
       throw new ConflictException('Customer with this email already exists');
     }
+  
     body.passwordHash = hashPassword;
     const newCustomer = customerRepository.create(body);
     return await customerRepository.save(newCustomer);
   }
+  
 
-  // 🔐 Protected route
+  // Protected route
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() updates: Partial<Customer>): Promise<Customer> {
     return this.customerService.update(id, updates);
   }
 
-  // 🔐 Protected route
+  // Protected route
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<{ message: string }> {
@@ -79,7 +96,7 @@ export class CustomerController {
     return { message: 'Customer deleted successfully' };
   }
 
-  // 🚫 Public route (no guard)
+  // Public route (no guard)
   @Post('/login')
   async customerLogin(@Body() body: CustomerLoginDto) {
     const { tenantId, email, password } = body;

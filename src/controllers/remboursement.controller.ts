@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Remboursement } from '../entity/remboursement.entity';
 import { JwtAuthGuard } from '../guard/jw-auth.guard';
@@ -21,6 +22,11 @@ export class RemboursementController {
   @Post()
   async create(@Request() req, @Body() data: Partial<Remboursement>): Promise<Remboursement> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const remboursementRepository = tenantDataSource.getRepository(Remboursement);
     const remboursement = remboursementRepository.create(data);
@@ -31,6 +37,11 @@ export class RemboursementController {
   @Get()
   async findAll(@Request() req): Promise<Remboursement[]> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const remboursementRepository = tenantDataSource.getRepository(Remboursement);
     return remboursementRepository.find();
@@ -40,6 +51,11 @@ export class RemboursementController {
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string): Promise<Remboursement> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const remboursementRepository = tenantDataSource.getRepository(Remboursement);
     const remboursement = await remboursementRepository.findOne({ where: { id } });
@@ -55,6 +71,11 @@ export class RemboursementController {
   @Put(':id')
   async update(@Request() req, @Param('id') id: string, @Body() data: Partial<Remboursement>): Promise<Remboursement> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const remboursementRepository = tenantDataSource.getRepository(Remboursement);
 
@@ -71,6 +92,11 @@ export class RemboursementController {
   @Delete(':id')
   async remove(@Request() req, @Param('id') id: string): Promise<{ message: string }> {
     const user: User = req.user;
+
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant ID is required');
+    }
+
     const tenantDataSource = await getTenantDataSource(user.tenantId);
     const remboursementRepository = tenantDataSource.getRepository(Remboursement);
 

@@ -14,9 +14,8 @@ export class AuthService {
   private tenantRepository: Repository<Tenant>;
 
   constructor(
-    private readonly jwtService: JwtService,  // Inject JwtService
+    private readonly jwtService: JwtService,
   ) {
-    // Initialize repositories from CentralDataSource
     this.userRepository = CentralDataSource.getRepository(User);
     this.tenantRepository = CentralDataSource.getRepository(Tenant);
   }
@@ -25,14 +24,13 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { email },
-      relations: ['tenant'],  // To load tenant if needed
+      relations: ['tenant'],
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Compare password hash
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -43,22 +41,24 @@ export class AuthService {
 
   // Login and return a JWT token
   async login(user: User) {
-    const payload = { sub: user.id, email: user.email, tenantId: user.tenantId, role:user.role };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tenantId: user.tenantId,
+      role: user.role,
+    };
 
-    // Generate a JWT using JwtService
     return {
       access_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET || 'defaultSecretKey',  // Ensure the secret is loaded
-        expiresIn: '1h',  // You can change expiration based on your requirement
+        secret: process.env.JWT_SECRET || 'defaultSecretKey',
+        expiresIn: '1h',
       }),
     };
   }
 
-  // Register a new user
+  // Register a new admin (only)
   async register(email: string, password: string, tenantId: string): Promise<User> {
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
+    const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new UnauthorizedException('User already exists');
     }
@@ -69,16 +69,13 @@ export class AuthService {
       email,
       passwordHash: hashedPassword,
       tenantId,
-      role: 'user',  // Default role, can be customized
+      role: 'admin',
     });
 
-    await this.userRepository.save(newUser);
-    return newUser;
+    return this.userRepository.save(newUser);
   }
 
-  // Hash password (helper for registration)
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10;
-    return await bcrypt.hash(password, saltRounds);
+    return bcrypt.hash(password, 10);
   }
 }

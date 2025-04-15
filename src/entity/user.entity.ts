@@ -15,8 +15,9 @@ export class User {
   @Column()
   passwordHash: string;
 
-  @Column()
-  tenantId: string;
+  @Column({ type: 'uuid', nullable: true })
+  tenantId: string | null;
+  
 
   @ManyToOne(() => Tenant, tenant => tenant.users)
   @JoinColumn({ name: 'tenantId' })
@@ -29,5 +30,5 @@ export class User {
   updatedAt: Date;
 
   @Column({ default: 'user' })
-  role: string;
+role: 'admin' | 'superadmin';
 }

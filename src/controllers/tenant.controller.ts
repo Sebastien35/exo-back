@@ -1,48 +1,82 @@
-// src/controllers/TenantController.ts
-import { Body, Controller, Get, Post, Param, Put, Delete } from '@nestjs/common'; // or your framework's decorators
-import { TenantService } from '../services/tenant.service'; // Adjust the import path as necessary  
-import { CreateTenantDto } from '../DTO/createTenant.dto'; // Adjust the import path as necessary
-import { Tenant } from '../entity/tenant.entity'; // Adjust the import path as necessary
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+  Request,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { TenantService } from '../services/tenant.service';
+import { CreateTenantDto } from '../DTO/createTenant.dto';
+import { Tenant } from '../entity/tenant.entity';
+import { JwtAuthGuard } from '../guard/jw-auth.guard';
+import { User } from '../entity/user.entity';
+import { NotFoundException } from '@nestjs/common';
 
 @Controller('tenants')
+@UseGuards(JwtAuthGuard)
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
 
   @Post()
-  async create(@Body() createTenantDto: CreateTenantDto) {
+  async create(@Body() createTenantDto: CreateTenantDto, @Request() req): Promise<Tenant> {
+    const user: User = req.user;
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException('Only admins can create tenants');
+    }
     return this.tenantService.createTenant(createTenantDto);
   }
 
   @Get()
-  async findAll() {
-    const tenants = await this.tenantService.getTenants();
-    let tenantArray = [
-      {
-        id: 'string',
-        name: 'string',
-      },
-    ];
-    let returnData: { tenantId: string; tenantName: string }[] = [];
-    for (const tenant of tenants) {
-      tenantArray[0].id = tenant.id;
-      tenantArray[0].name = tenant.name;
-      returnData.push({ tenantId: tenant.id, tenantName: tenant.name });
+  async findAll(@Request() req): Promise<{ tenantId: string; tenantName: string }[]> {
+    const user: User = req.user;
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException('Only admins can access the tenant list');
     }
-    return returnData;
+
+    const tenants = await this.tenantService.getTenants();
+    return tenants.map((tenant) => ({
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+    }));
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tenantService.getTenantById(id);
+  async findOne(@Param('id') id: string, @Request() req): Promise<Tenant> {
+    const user: User = req.user;
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException();
+    }
+  
+    const tenant = await this.tenantService.getTenantById(id);
+    if (!tenant) {
+      throw new NotFoundException(`Tenant with ID ${id} not found`);
+    }
+  
+    return tenant;
   }
+  
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateData: Partial<Tenant>) {
+  async update(@Param('id') id: string, @Body() updateData: Partial<Tenant>, @Request() req): Promise<Tenant> {
+    const user: User = req.user;
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException('Only admins can update tenants');
+    }
     return this.tenantService.updateTenant(id, updateData);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.tenantService.deleteTenant(id);
+  async remove(@Param('id') id: string, @Request() req): Promise<{ message: string }> {
+    const user: User = req.user;
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException('Only admins can delete tenants');
+    }
+    await this.tenantService.deleteTenant(id);
+    return { message: 'Tenant deleted successfully' };
   }
 }
