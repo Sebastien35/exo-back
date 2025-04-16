@@ -20,8 +20,24 @@ git clone https://github.com/your-username/your-project.git
 cd exo-back
 docker compose up -d --build
 npm install
+```
+COPY 
+```
+CENTRAL_DB_HOST=localhost
+CENTRAL_DB_PORT=3310
+CENTRAL_DB_USER=root
+CENTRAL_DB_PASSWORD=strongpassword
+CENTRAL_DB_NAME=template_db
+CENTRAL_DB_URL=mariadb://admin:strongpassword@localhost:3310/template_db
+JWT_SECRET=mysecretkey
+ENCRYPTION_KEY=my_super_secret_key_123456789
+```
+In a .env file at the project root
+Then run
+```
 npm run start:dev
 ```
+To start the nest app
 
 
 
